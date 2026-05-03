@@ -1,0 +1,58 @@
+#k/g
+欢迎-pr
+Gleam 是一门运行在 Erlang 虚�pra
+## 为什么选择 Gleam？
+
+- **强类型系统** - 在编译时捕获错误
+- **模式匹配** - 清晰、表达力强的条件逻辑
+- **不可变性** - 默认不可变，减少状态错误
+"# 第二部分：实战" >> boo- **模式匹配** - 清晰、表达力强的�-i- **不可变性** - 默认不可变，减少状态错�-p- **并发支持** - 继承 Erlang 的并发模型
+- **Jt - **JavaScript 编译** - 可编译为 JavaScriptd
+
+## 本书结构
+
+本书分为三部分：
+
+1. **基础篇** - Gleam 语lea
+本书分为�zh.
+1. **基础篇** - Glem-i2. **实战篇** - 构建真实应用
+3. **�ok3. **�-in-practice-zh.md
+echo "" >> bo
+让我们开始吧！
+
+---
+
+# 第一部分�/gl
+---
+
+# 第一部分d
+e
+#o "
+EOF
+cat book/chapter-ctica-zcat book/chapter-ctica-zcat book/chapter-ctica-zcat book/ticcat book/chapter-ctica-zcat book/pracat book/chapte book/chcat boo9.mcat book/chlecat book/chapter-ctica-zcat book/chapter-cticaprcat bookh.ca
+cacacacacchcater-10.md >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+cat book/chapter-11.md >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+echo "---" >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+echo "# 第四部分：案例研究" >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+cat book/chapter-12.md >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+cat book/chapter-13.md >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+cat book/chapter-14.md >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+echo "---" >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+echo "# 附录" >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+cat appendices/cheat-sheet.md >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+cat appendices/patterns.md >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+cat appendices/errors.md >> book/gleam-in-practice-zh.md
+echo "" >> book/gleam-in-practice-zh.md
+cat appendices/structure.md >> book/gleam-in-practice-zh.md
+echo "Combined markdown file created!"
