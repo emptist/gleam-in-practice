@@ -90,6 +90,12 @@
     - Migration strategy
     - Benefits realized
 
+15. [Building an AI Agent with Gleam](./chapter-15.md)
+    - Event-driven architecture with FFI
+    - Tool system with JSON schema
+    - Streaming support for LLM responses
+    - 650 lines, 52 tests passing
+
 ### Appendices
 
 - [A: Gleam vs TypeScript Cheat Sheet](../appendices/cheat-sheet.md)
@@ -123,11 +129,11 @@ This book is written to be AI-friendly:
 
 | Part | Chapters | Status |
 |------|----------|--------|
-| I: Foundations | 1-4 | 🚧 In Progress |
-| II: Real-World | 5-8 | 📝 Planned |
-| III: Advanced | 9-11 | 📝 Planned |
-| IV: Case Studies | 12-14 | 📝 Planned |
+| I: Foundations | 1-4 | ✅ Complete |
+| II: Real-World | 5-8 | ✅ Complete |
+| III: Advanced | 9-11 | ✅ Complete |
+| IV: Case Studies | 12-15 | ✅ Complete |
 
 ---
 
-*Last updated: 2026-05-03*
+*Last updated: 2026-05-04*

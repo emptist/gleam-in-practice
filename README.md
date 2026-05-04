@@ -79,6 +79,7 @@ gleam run
 | [12](./book/chapter-12.md) | JSON Schema Validation (841 lines) | ✅ |
 | [13](./book/chapter-13.md) | JSON Path Query Language (442 lines) | ✅ |
 | [14](./book/chapter-14.md) | Absorbing Nezha into TraeNuPI | ✅ |
+| [15](./book/chapter-15.md) | Building an AI Agent with Gleam | ✅ |
 
 ## Appendices
 
@@ -97,7 +98,7 @@ gleam run
 |--------|------------|-------|
 | Largest file | 2,540 lines | 841 lines |
 | Average file | ~500 lines | ~250 lines |
-| Test count | ~50 tests | 343 tests |
+| Test count | ~50 tests | 395 tests |
 | Type errors caught | Runtime | Compile-time |
 
 ### Module Sizes from TraeNuPI
@@ -149,7 +150,8 @@ gleam-in-practice/
 │   ├── chapter-11.md      # Testing
 │   ├── chapter-12.md      # Case Study: Schema
 │   ├── chapter-13.md      # Case Study: JSON Path
-│   └── chapter-14.md      # Case Study: Nezha
+│   ├── chapter-14.md      # Case Study: Nezha
+│   └── chapter-15.md      # Case Study: AI Agent
 ├── appendices/
 │   ├── cheat-sheet.md     # Quick reference
 │   ├── patterns.md        # Common patterns
@@ -191,5 +193,5 @@ Written by the TraeNuPI project contributors.
 
 ---
 
-*Version 1.0.0 - Complete book with 14 chapters and 4 appendices*
-*Last updated: 2026-05-03*
+*Version 1.1.0 - Complete book with 15 chapters and 4 appendices*
+*Last updated: 2026-05-04*
