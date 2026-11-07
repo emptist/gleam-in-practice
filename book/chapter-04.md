@@ -406,31 +406,288 @@ pub fn safe_call(fn_name: String, args: List(Dynamic)) -> Result(Dynamic, FfiErr
 
 ## Summary
 
-| Aspect | Gleam Side | JavaScript Side |
-|--------|------------|-----------------|
-| Function declaration | `@external` attribute | Export function |
-| Types | Gleam types | Match Gleam representation |
-| Options | `Option(a)` | `{ type: 'None' }` or `{ type: 'Some', value }` |
-| Results | `Result(a, e)` | `{ type: 'Ok', value }` or `{ type: 'Error', value }` |
-| Lists | `List(a)` | Array with `toList()` |
-| Promises | `Promise(a)` | JavaScript Promise |
+FFI enables Gleam to:
+- Use JavaScript's vast ecosystem
+- Integrate with existing TypeScript code
+- Build hybrid applications
+- Leverage platform-specific features
+
+## Advanced FFI Patterns
+
+### Pattern 4: Event Emitter Integration
+
+Real-world example from PI Agent:
+
+**Gleam Interface:**
+```gleam
+pub type EventEmitter
+
+pub type EventHandler =
+  fn(AgentEvent) -> Nil
+
+@external(javascript, "./event_ffi.mjs", "newEmitter")
+pub fn new_emitter() -> EventEmitter
+
+@external(javascript, "./event_ffi.mjs", "on")
+pub fn on(emitter: EventEmitter, handler: EventHandler) -> EventEmitter
+
+@external(javascript, "./event_ffi.mjs", "emit")
+pub fn emit(emitter: EventEmitter, event: AgentEvent) -> EventEmitter
+```
+
+**JavaScript Implementation:**
+```javascript
+import { EventEmitter } from 'events'
+
+export function newEmitter() {
+  return new EventEmitter()
+}
+
+export function on(emitter, handler) {
+  emitter.on('agent-event', handler)
+  return emitter
+}
+
+export function emit(emitter, event) {
+  emitter.emit('agent-event', event)
+  return emitter
+}
+```
+
+**Usage:**
+```gleam
+let emitter = new_emitter()
+let emitter = on(emitter, fn(event) {
+  case event {
+    AgentStart -> io.println("Agent started")
+    Error(msg) -> io.println("Error: " <> msg)
+    _ -> Nil
+  }
+})
+let _ = emit(emitter, AgentStart)
+```
+
+### Pattern 5: Streaming with Callbacks
+
+Real-world example for LLM streaming:
+
+**Gleam Interface:**
+```gleam
+pub type StreamCallback =
+  fn(String, Bool) -> Nil
+
+pub type StreamHandle {
+  StreamHandle(cleanup: fn() -> Nil)
+}
+
+@external(javascript, "./streaming_ffi.mjs", "createStreamingRequest")
+pub fn create_streaming_request(
+  url: String,
+  headers: List(#(String, String)),
+  body: String,
+  on_chunk: StreamCallback,
+) -> Promise(Result(StreamHandle, String))
+```
+
+**JavaScript Implementation:**
+```javascript
+export function createStreamingRequest(url, headers, body, onChunk) {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController()
+    
+    fetch(url, {
+      method: 'POST',
+      headers: Object.fromEntries(headers),
+      body: body,
+      signal: controller.signal,
+    })
+    .then(response => {
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      
+      function readChunk() {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            onChunk('', true)  // Signal completion
+            resolve({ cleanup: () => controller.abort() })
+            return
+          }
+          
+          const chunk = decoder.decode(value, { stream: true })
+          onChunk(chunk, false)
+          readChunk()
+        })
+      }
+      
+      readChunk()
+    })
+    .catch(error => reject(error.message))
+  })
+}
+```
+
+**Usage:**
+```gleam
+let request = create_streaming_request(
+  "https://api.openrouter.ai/v1/chat/completions",
+  [#("Authorization", "Bearer " <> api_key)],
+  json_body,
+  fn(chunk, is_done) {
+    case is_done {
+      True -> io.println("Stream complete")
+      False -> io.println("Received: " <> chunk)
+    }
+  },
+)
+```
+
+### Pattern 6: Session Management
+
+Complete FFI bridge for stateful operations:
+
+**Gleam Interface:**
+```gleam
+pub type PiAgentSession
+
+@external(javascript, "./pi_agent_ffi.mjs", "createSession")
+pub fn create_session(api_key: String, system_prompt: String) -> PiAgentSession
+
+@external(javascript, "./pi_agent_ffi.mjs", "sendMessage")
+pub fn send_message(
+  session: PiAgentSession,
+  message: String,
+) -> Promise(String)
+
+@external(javascript, "./pi_agent_ffi.mjs", "sendMessageStreaming")
+pub fn send_message_streaming(
+  session: PiAgentSession,
+  message: String,
+  on_chunk: fn(String) -> Nil,
+) -> Promise(String)
+```
+
+**JavaScript Implementation:**
+```javascript
+import { Agent } from './agent.mjs'
+
+export function createSession(apiKey, systemPrompt) {
+  return {
+    agent: new Agent(systemPrompt, apiKey),
+    apiKey: apiKey
+  }
+}
+
+export function sendMessage(session, message) {
+  return session.agent.run([{ role: 'user', content: message }])
+    .then(response => response.content)
+}
+
+export function sendMessageStreaming(session, message, onChunk) {
+  return session.agent.runStreaming(
+    [{ role: 'user', content: message }],
+    onChunk
+  )
+  .then(response => response.content)
+}
+```
+
+**TypeScript Consumer:**
+```typescript
+import { createPiAgentSession } from './pi-agent-bridge.js'
+
+const session = createPiAgentSession(
+  process.env.OPENROUTER_API_KEY,
+  "You are a helpful assistant"
+)
+
+// Simple message
+const response = await session.sendMessage("What is 2 + 2?")
+
+// Streaming message
+const streamingResponse = await session.sendMessageStreaming(
+  "Tell me a story",
+  (chunk) => console.log("Chunk:", chunk)
+)
+```
+
+### Pattern 7: Tool System with JSON Schema
+
+Type-safe tool definitions:
+
+**Gleam:**
+```gleam
+pub type Tool {
+  Tool(
+    name: String,
+    description: String,
+    parameters: JsonSchema,
+    execution_mode: ToolExecutionMode,
+  )
+}
+
+pub type JsonSchema {
+  ObjectSchema(properties: List(#(String, JsonSchema)), required: List(String))
+  StringSchema(description: Option(String))
+  IntegerSchema(description: Option(String))
+  BooleanSchema(description: Option(String))
+  ArraySchema(items: JsonSchema, description: Option(String))
+}
+
+pub fn tool_to_json(tool: Tool) -> json.Json {
+  json.object([
+    #("type", json.string("function")),
+    #(
+      "function",
+      json.object([
+        #("name", json.string(tool.name)),
+        #("description", json.string(tool.description)),
+        #("parameters", json_schema_to_json(tool.parameters)),
+      ]),
+    ),
+  ])
+}
+```
+
+**JavaScript FFI:**
+```javascript
+export function executeToolCall(toolCall, handlers) {
+  const { name, arguments: args } = toolCall.function
+  const handler = handlers[name]
+  
+  if (!handler) {
+    return {
+      tool_call_id: toolCall.id,
+      content: JSON.stringify({ error: `Unknown tool: ${name}` }),
+      is_error: true
+    }
+  }
+  
+  try {
+    const result = handler(JSON.parse(args))
+    return {
+      tool_call_id: toolCall.id,
+      content: JSON.stringify(result),
+      is_error: false
+    }
+  } catch (e) {
+    return {
+      tool_call_id: toolCall.id,
+      content: JSON.stringify({ error: e.message }),
+      is_error: true
+    }
+  }
+}
+```
 
 ## Key Takeaways
 
-1. **FFI is bidirectional** - Call JS from Gleam, Gleam from TypeScript
-2. **Type conversions are explicit** - No implicit any
-3. **Keep FFI functions small** - Easier to test and debug
-4. **Document boundaries** - Future you will thank present you
-5. **Use bridge modules** - Clean API for TypeScript consumers
+1. **FFI is straightforward** - Direct function mapping with type annotations
+2. **Type safety preserved** - Gleam types guide JavaScript implementation
+3. **Event systems work** - EventEmitter integrates cleanly
+4. **Streaming is simple** - Callbacks handle real-time data
+5. **State management** - Sessions maintain state across FFI boundary
+6. **Tool systems** - JSON schema provides type safety
 
 ## Next Steps
 
-In **Chapter 5**, we explored:
-- Type-safe SQL queries
-- Connection pooling
-- CRUD operations
-- Health checks
-
----
-
-*Continue to [Chapter 6: Building a CLI](./chapter-06.md)*
+In the next chapter, we'll explore database operations with type-safe SQL queries and connection pooling.

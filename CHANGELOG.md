@@ -4,6 +4,42 @@ All notable changes to this book will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.0] - 2026-05-04
+
+### Added
+- **Chapter 15: Building an AI Agent with Gleam**
+  - Event-driven architecture with JavaScript FFI
+  - Tool system with JSON schema validation
+  - Streaming support for real-time LLM responses
+  - Type-safe state management with immutable data structures
+  - Complete TypeScript integration examples
+  - 650 lines of production code, 52 tests passing
+
+### Enhanced
+- **Chapter 4: FFI - JavaScript Integration**
+  - Pattern 4: Event Emitter Integration (Node.js EventEmitter FFI)
+  - Pattern 5: Streaming with Callbacks (LLM streaming implementation)
+  - Pattern 6: Session Management (stateful FFI operations)
+  - Pattern 7: Tool System with JSON Schema (type-safe tool definitions)
+  - Added 280+ lines of practical FFI examples
+
+- **Appendix B: Common Patterns**
+  - Pattern 11: Event System Pattern (type-safe event-driven architecture)
+  - Pattern 12: Tool System Pattern (type-safe tool definitions with JSON schema)
+  - Pattern 13: Streaming Pattern (callback-based streaming for real-time data)
+  - Added 200+ lines of pattern examples
+
+### Changed
+- Updated test count: 343 → 395 tests
+- Updated book status: All parts marked as ✅ Complete
+- Updated version: 1.0.0 → 1.1.0
+
+### Statistics
+- **Total Chapters**: 15 (was 14)
+- **Total Patterns**: 13 (was 10)
+- **Total Tests**: 395 (was 343)
+- **New Code Examples**: 500+ lines
+
 ## [1.1.0-zh] - 2026-05-03
 
 ### Added
@@ -110,21 +146,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Version History
 
-| Version | Date       | Description                                     |
-| ------- | ---------- | ----------------------------------------------- |
-| 1.0.0   | 2026-05-03 | Complete book with 14 chapters and 4 appendices |
-| 0.4.0   | 2026-05-03 | Chapters 6-8, task & meeting modules            |
-| 0.3.0   | 2026-05-03 | Chapters 4-5, database module                   |
-| 0.2.0   | 2026-05-03 | Chapters 2-3, JSON patterns                     |
-| 0.1.0   | 2026-05-03 | Initial structure and Chapter 1                 |
+| Version | Date       | Description                                           |
+| ------- | ---------- | ----------------------------------------------------- |
+| 1.1.0   | 2026-05-04 | Chapter 15, advanced FFI patterns, 3 new patterns     |
+| 1.0.0   | 2026-05-03 | Complete book with 14 chapters and 4 appendices       |
+| 0.4.0   | 2026-05-03 | Chapters 6-8, task & meeting modules                  |
+| 0.3.0   | 2026-05-03 | Chapters 4-5, database module                         |
+| 0.2.0   | 2026-05-03 | Chapters 2-3, JSON patterns                           |
+| 0.1.0   | 2026-05-03 | Initial structure and Chapter 1                       |
 
 ## Statistics
 
 | Metric            | Value  |
 | ----------------- | ------ |
-| Chapters          | 14     |
+| Chapters          | 15     |
 | Appendices        | 4      |
+| Patterns          | 13     |
 | Gleam modules     | 23     |
 | Total Gleam lines | 7,000+ |
-| Tests passing     | 343    |
+| Tests passing     | 395    |
 | FFI files         | 6      |

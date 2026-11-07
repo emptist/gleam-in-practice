@@ -313,28 +313,326 @@ pub fn timed(f: fn() -> a) -> #(a, Int) {
 
 ## 10. Strategy Pattern
 
-Swap algorithms at runtime:
+Define a family of algorithms:
 
 ```gleam
-pub type SortStrategy(a) {
-  SortStrategy(sort: fn(List(a)) -> List(a))
+pub type SortStrategy {
+  ByName
+  ByDate
+  BySize
 }
 
-pub fn bubble_sort() -> SortStrategy(a) {
-  SortStrategy(fn(list) { 
-    // bubble sort implementation
-    list 
+pub fn sort_files(files: List(File), strategy: SortStrategy) -> List(File) {
+  case strategy {
+    ByName -> list.sort(files, fn(a, b) { string.compare(a.name, b.name) })
+    ByDate -> list.sort(files, fn(a, b) { int.compare(a.modified, b.modified) })
+    BySize -> list.sort(files, fn(a, b) { int.compare(a.size, b.size) })
+  }
+}
+
+// Usage
+let sorted = sort_files(files, ByName)
+```
+
+---
+
+## 11. Event System Pattern
+
+Type-safe event-driven architecture:
+
+```gleam
+pub type EventEmitter
+
+pub type AgentEvent {
+  AgentStart
+  AgentEnd(final_messages: List(Message))
+  TurnStart
+  TurnEnd(message: Message, tool_calls: List(ToolCall))
+  Error(message: String)
+}
+
+pub type EventHandler =
+  fn(AgentEvent) -> Nil
+
+@external(javascript, "./event_ffi.mjs", "newEmitter")
+pub fn new_emitter() -> EventEmitter
+
+@external(javascript, "./event_ffi.mjs", "on")
+pub fn on(emitter: EventEmitter, handler: EventHandler) -> EventEmitter
+
+@external(javascript, "./event_ffi.mjs", "emit")
+pub fn emit(emitter: EventEmitter, event: AgentEvent) -> EventEmitter
+```
+
+**JavaScript FFI:**
+```javascript
+import { EventEmitter } from 'events'
+
+export function newEmitter() {
+  return new EventEmitter()
+}
+
+export function on(emitter, handler) {
+  emitter.on('agent-event', handler)
+  return emitter
+}
+
+export function emit(emitter, event) {
+  emitter.emit('agent-event', event)
+  return emitter
+}
+```
+
+**Usage:**
+```gleam
+let emitter = new_emitter()
+let emitter = on(emitter, fn(event) {
+  case event {
+    AgentStart -> io.println("🤖 Agent started")
+    TurnStart -> io.println("⏳ Processing turn")
+    TurnEnd(msg, tools) -> {
+      io.println("✅ Turn complete")
+      io.println("Tools called: " <> int.to_string(list.length(tools)))
+    }
+    Error(msg) -> io.println("❌ Error: " <> msg)
+    AgentEnd(msgs) -> io.println("🏁 Agent finished")
+  }
+})
+
+let _ = emit(emitter, AgentStart)
+```
+
+**Benefits:**
+- Type-safe event handling
+- Decoupled components
+- Real-time updates
+- Easy testing with mock handlers
+
+---
+
+## 12. Tool System Pattern
+
+Type-safe tool definitions with JSON schema:
+
+```gleam
+pub type Tool {
+  Tool(
+    name: String,
+    description: String,
+    parameters: JsonSchema,
+    handler: fn(String) -> ToolResult,
+  )
+}
+
+pub type JsonSchema {
+  ObjectSchema(properties: List(#(String, JsonSchema)), required: List(String))
+  StringSchema(description: Option(String))
+  IntegerSchema(description: Option(String))
+  BooleanSchema(description: Option(String))
+  ArraySchema(items: JsonSchema, description: Option(String))
+}
+
+pub type ToolResult {
+  ToolResult(
+    content: List(ContentBlock),
+    is_error: Bool,
+    details: Option(Dynamic),
+  )
+}
+
+pub type ToolRegistry {
+  ToolRegistry(tools: List(#(String, Tool)))
+}
+```
+
+**Tool Definition:**
+```gleam
+pub fn define_weather_tool() -> Tool {
+  Tool(
+    name: "get_weather",
+    description: "Get current weather for a city",
+    parameters: ObjectSchema(
+      properties: [
+        #("city", StringSchema(Some("City name"))),
+        #("unit", StringSchema(Some("Temperature unit (celsius/fahrenheit)"))),
+      ],
+      required: ["city"],
+    ),
+    handler: fn(args) {
+      let decoded = decode_weather_args(args)
+      case decoded {
+        Ok(city) -> {
+          let weather = fetch_weather(city)
+          ToolResult(
+            content: [TextContent(weather)],
+            is_error: False,
+            details: None,
+          )
+        }
+        Error(msg) -> ToolResult(
+          content: [TextContent("Invalid arguments: " <> msg)],
+          is_error: True,
+          details: None,
+        )
+      }
+    },
+  )
+}
+```
+
+**Tool Registry:**
+```gleam
+pub fn new_registry() -> ToolRegistry {
+  ToolRegistry(tools: [])
+}
+
+pub fn register_tool(
+  registry: ToolRegistry,
+  tool: Tool,
+) -> ToolRegistry {
+  ToolRegistry(tools: [#(tool.name, tool), ..registry.tools])
+}
+
+pub fn execute_tool(
+  registry: ToolRegistry,
+  tool_name: String,
+  arguments: String,
+) -> ToolResult {
+  case find_tool(registry, tool_name) {
+    Some(tool) -> tool.handler(arguments)
+    None -> ToolResult(
+      content: [TextContent("Tool not found: " <> tool_name)],
+      is_error: True,
+      details: None,
+    )
+  }
+}
+```
+
+**Usage:**
+```gleam
+let registry = new_registry()
+let registry = register_tool(registry, define_weather_tool())
+let registry = register_tool(registry, define_calculator_tool())
+
+let result = execute_tool(registry, "get_weather", "{\"city\": \"Tokyo\"}")
+case result.is_error {
+  True -> io.println("Error: " <> content_to_string(result.content))
+  False -> io.println("Result: " <> content_to_string(result.content))
+}
+```
+
+**Benefits:**
+- Type-safe tool definitions
+- JSON schema validation
+- Composable tool registry
+- Easy to add new tools
+- Clear error handling
+
+---
+
+## 13. Streaming Pattern
+
+Callback-based streaming for real-time data:
+
+```gleam
+pub type StreamCallback =
+  fn(String, Bool) -> Nil
+
+pub type StreamHandle {
+  StreamHandle(cleanup: fn() -> Nil)
+}
+
+@external(javascript, "./streaming_ffi.mjs", "createStreamingRequest")
+pub fn create_streaming_request(
+  url: String,
+  headers: List(#(String, String)),
+  body: String,
+  on_chunk: StreamCallback,
+) -> Promise(Result(StreamHandle, String))
+```
+
+**JavaScript Implementation:**
+```javascript
+export function createStreamingRequest(url, headers, body, onChunk) {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController()
+    
+    fetch(url, {
+      method: 'POST',
+      headers: Object.fromEntries(headers),
+      body: body,
+      signal: controller.signal,
+    })
+    .then(response => {
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      
+      function readChunk() {
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            onChunk('', true)
+            resolve({ cleanup: () => controller.abort() })
+            return
+          }
+          
+          const chunk = decoder.decode(value, { stream: true })
+          onChunk(chunk, false)
+          readChunk()
+        })
+      }
+      
+      readChunk()
+    })
+    .catch(error => reject(error.message))
   })
 }
+```
 
-pub fn quick_sort(compare: fn(a, a) -> Order) -> SortStrategy(a) {
-  SortStrategy(fn(list) { 
-    // quick sort implementation
-    list 
-  })
-}
+**Usage:**
+```gleam
+let _ = create_streaming_request(
+  "https://api.example.com/stream",
+  [#("Authorization", "Bearer token")],
+  json_body,
+  fn(chunk, is_done) {
+    case is_done {
+      True -> io.println("✅ Stream complete")
+      False -> {
+        io.print(chunk)
+      }
+    }
+  },
+)
+```
 
-pub fn sort(list: List(a), strategy: SortStrategy(a)) -> List(a) {
-  strategy.sort(list)
-}
+**Benefits:**
+- Real-time data processing
+- Memory efficient (no buffering)
+- Easy cancellation
+- Works with any streaming API
+
+---
+
+## Summary
+
+These patterns solve common problems in Gleam:
+
+| Pattern | Use Case | Benefits |
+|---------|----------|----------|
+| Builder | Complex objects | Fluent API, immutability |
+| State Machine | Workflows | Clear states, transitions |
+| Result Composition | Error handling | Explicit errors, no exceptions |
+| Option Composition | Null safety | No null checks, explicit |
+| Validation | Input checking | Composable, accumulates errors |
+| Repository | Data access | Abstraction, testability |
+| Cache | Performance | TTL, LRU, thread-safe |
+| Observer | Events | Decoupling, notifications |
+| Decorator | Enhancements | Composable, flexible |
+| Strategy | Algorithms | Swappable, extensible |
+| Event System | Real-time updates | Type-safe, decoupled |
+| Tool System | Extensibility | JSON schema, type-safe |
+| Streaming | Real-time data | Memory efficient, responsive |
+
+Choose patterns based on your specific needs. Gleam's type system makes these patterns safe and maintainable.
 ```
